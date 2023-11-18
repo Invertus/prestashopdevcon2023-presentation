@@ -8,16 +8,198 @@
 
 		<link rel="stylesheet" href="dist/reset.css">
 		<link rel="stylesheet" href="dist/reveal.css">
-		<link rel="stylesheet" href="dist/theme/black.css">
+		<link rel="stylesheet" href="dist/theme/white.css">
 
 		<!-- Theme used for syntax highlighted code -->
 		<link rel="stylesheet" href="plugin/highlight/monokai.css">
+		<style>
+			.scrollable {
+				bottom: 0px;
+				overflow-y: auto  !important;
+				overflow-x: hidden !important;
+			}
+
+			.img-contain {
+				object-fit: contain;
+			}
+		</style>
 	</head>
 	<body>
 		<div class="reveal">
 			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
+				<section data-background-gradient="linear-gradient(to bottom, #283b95, #17b2c3)">
+					<h1 class="r-fit-text">Module development techniques I wish I would use</h1>
+				</section>
+				<section>About me. TODO</section>
+				<section>
+					<h3>When we start working with modules</h3>
+					<img data-src="./images/memes/ps_versions.jpg">
+					<aside class="notes">
+						<ul>
+							<li>Higher Ps version means  higher PHP version + ability to use new features (Symfony controllers, CQRS, etc...)</li>
+							<li>Joke. Merchants dont upgrade their stores every year. Websites are not iPhones</li>
+						</ul>
+					</aside>
+				</section>
+				<section data-background-gradient="linear-gradient(to bottom, #283b95, #17b2c3)">
+					<section>
+						<img data-src="./images/Docker-Logo-2013.png" width="500" height="500" class="img-contain">
+						<p>To the rescue!</p>
+					</section>
+					<section>
+						<h3>
+							Using docker for local PrestaShop development benefits
+						</h3>
+						<ul>
+							<li class="fragment">Easily switch between PrestaShop versions</li>
+							<li class="fragment">There are no problems to run old PrestaShop (with php 5.6 lets say)</li>
+							<li class="fragment">
+								<p class="fragment highlight-green">
+									You can run tests and other tools for same environments
+								</p>
+							</li>
+						</ul>
+					</section>
+				</section>
+				<section>
+					<section>
+						<h3>PHPStan</h3>
+						<p>Find bugs before they reach production!</p>
+					</section>
+					<section>
+						<pre>
+							<code data-trim data-noescape data-line-numbers="5">
+								public function hookDisplayCheckoutSummaryTop()
+								{
+									$text = "";
+									if ($this->context->controller instanceof OrderControllerCore) {
+										$checkoutProcess = $this->context->controller->getCheckoutProcess();
+										$text .= "We are currently at step: " . $checkoutProcess->getCurrentStep()->getTitle();
+									}
+
+									return $text;
+								}
+							</code>
+						</pre>
+					</section>
+					<section>
+						<h3>
+							1. PHPStan CI setup
+						</h3>
+						<pre>
+							<code data-trim data-noescape data-line-numbers="11|30|34|39">
+								name: PHP lint
+on: [pull_request]
+
+jobs:
+  # Run PHPStan against the module and a PrestaShop release
+  phpstan:
+    name: PHPStan
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        presta-versions: ['1.7.4.0', 'latest']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.0.0
+
+      # Add vendor folder in cache to make next builds faster
+      - name: Cache vendor folder
+        uses: actions/cache@v1
+        with:
+          path: vendor
+          key: php-${{ hashFiles('composer.lock') }}
+
+      # Add composer local folder in cache to make next builds faster
+      - name: Cache composer folder
+        uses: actions/cache@v1
+        with:
+          path: ~/.composer/cache
+          key: php-composer-cache
+
+      - run: composer install --ignore-platform-reqs
+
+      # Docker images prestashop/prestashop may be used, even if the shop remains uninstalled
+      - name: Pull PrestaShop files (Tag ${{ matrix.presta-versions }})
+        run: docker run -tid --rm -v ps-volume:/var/www/html --name temp-ps prestashop/prestashop:${{ matrix.presta-versions }}
+
+      # Run a container for PHPStan, having access to the module content and PrestaShop sources.
+      # This tool is outside the composer.json because of the compatibility with PHP 5.6
+      - name : Run PHPStan
+        run: docker run --rm --volumes-from temp-ps -v $PWD:/web/module -e _PS_ROOT_DIR_=/var/www/html --workdir=/web/module phpstan/phpstan:0.12 analyse --configuration=/web/module/tests/phpstan/phpstan-base.neon
+
+							</code>
+						</pre>
+					</section>
+					<section>
+						<h3>
+							2. Neon file
+						</h3>
+					
+						<pre>
+							<code data-trim data-noescape>
+								includes:
+	- %currentWorkingDirectory%/vendor/prestashop/php-dev-tools/phpstan/ps-module-extension.neon
+parameters:
+	paths:
+		# From PHPStan 0.12, paths to check are relative to the neon file
+		- ../../controllers
+		- ../../src
+		- ../../prestashopdevcon.php
+	level: 2
+	reportUnmatchedIgnoredErrors: false
+							</code>
+						</pre>
+					</section>
+					<section>
+						<h3>
+							3. Composer.json
+						</h3>
+						<pre>
+							<code data-trim data-noescape data-line-numbers="7-11|30">
+								{
+									"name": "invertus/prestashopdevcon",
+									"autoload": {
+										"psr-4": {
+											"Invertus\\Prestashopdevcon\\": "src/"
+										},
+										"classmap": [
+											"src/",
+											"prestashopdevcon.php",
+											"controllers"
+										]
+									},
+									"config": {
+										"platform": {
+											"php": "5.6.0"
+										},
+										"sort-packages": true,
+										"preferred-install": "dist",
+										"optimize-autoloader": true,
+										"prepend-autoloader": false
+									},
+									"authors": [
+										{
+											"name": "Tomas",
+											"email": "tomas.ilginis@invertus.eu"
+										}
+									],
+									"require": {},
+									"require-dev": {
+										"prestashop/php-dev-tools": "~3.0"
+									}
+								}								
+							</code>
+						</pre>
+					</section>
+					<section>
+						<h3>And the final result</h3>
+						<img data-src="./images/phpstan_error.png">
+						<aside class="notes">
+							I just catched critical error
+						</aside>
+					</section>
+				</section>
 			</div>
 		</div>
 
@@ -31,9 +213,9 @@
 			// - https://revealjs.com/config/
 			Reveal.initialize({
 				hash: true,
-
+				slideNumber: true,
 				// Learn about plugins: https://revealjs.com/plugins/
-				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ],
 			});
 		</script>
 	</body>
