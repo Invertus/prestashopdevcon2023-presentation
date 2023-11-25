@@ -281,7 +281,8 @@ parameters:
 				</section>
 				<section>
 					<section>
-						<h3>Reusability</h3>
+						<h3>Reusability with Composer packages</h3>
+						<img data-src="./images/composer.svg" width="300" height="300">
 						<aside class="notes">
 							when you made more than 10+ payment modules you start to think how to share common code.
 							<ul>
@@ -289,10 +290,6 @@ parameters:
 								<li>But you can also go beyond that</li>
 							</ul>
 						</aside>
-					</section>
-					<section>
-						<h3>Composer packages</h3>
-						<img data-src="./images/composer.svg" width="300" height="300">
 					</section>
 					<section>
 						<h3>Utility package</h3>
@@ -308,6 +305,93 @@ parameters:
 								<small class="fragment">* With same input it produces same output</small>
 							</li>
 						</ul>
+					</section>
+					<section>
+						<h4>Very simple sample</h4>
+						<pre>
+							<code data-trim data-noescape>
+								namespace YourNamespace\Core\Utilities;
+
+								class ArrayUtility
+								{
+									/**
+									* Check if two arrays overlaps with at least one element
+									* @param array $a
+									* @param array $b
+									* @return bool true if $a overlaps with $b even the slightest
+									*/
+									public static function overlapsWith(array $a, array $b): bool
+									{
+										$intersect = array_intersect($a, $b);
+
+										return !empty($intersect);
+									}
+								}
+							</code>
+						</pre>
+					</section>
+					<section>
+						<h4>And ofcource unit tests</h4>
+						<pre>
+							<code data-trim data-noescape>
+								/** @dataProvider provideOverlapsWith */
+    public function testOverlapsWith($a, $b, $expected)
+    {
+        $this->assertEquals($expected, ArrayUtility::overlapsWith($a, $b));
+    }
+
+    public function provideOverlapsWith()
+    {
+        return [
+            [
+                [1, 2, 3],
+                [2, 4, 5],
+                true,
+            ],
+            [
+                [1, 2, 3],
+                [4, 5, 6],
+                false,
+            ],
+        ];
+    }
+							</code>
+						</pre>
+					</section>
+					<section>
+						<h3>How to create package with Prestashop dependencies?</h3>
+					</section>
+					<section>
+						<h3>Finally, to integrate package to your code:</h3>
+						<ul>
+							<li class="fragment">
+								Make it public in composer packagist
+							</li>
+							<li class="fragment">
+								Use private composer packages
+							</li>
+							<li class="fragment">
+								Use github repository
+							</li>
+						</ul>
+					</section>
+					<section>
+						<pre>
+							<code>
+								#composer.json
+								{
+									"repositories": [
+										{
+											"type": "vcs",
+											"url":  "git@bitbucket.org:vendor/my-private-repo.git"
+										}
+									],
+									"require": {
+										"vendor/my-private-repo": "dev-master"
+									}
+								}
+							</code>
+						</pre>
 					</section>
 				</section>
 			</div>
