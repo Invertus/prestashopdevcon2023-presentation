@@ -23,14 +23,47 @@
 				object-fit: contain;
 			}
 		</style>
+		<style type="text/css">
+			/* 1. Style header/footer <div> so they are positioned as desired. */
+			#header-left {
+				position: absolute;
+				top: 0%;
+				left: 0%;
+			}
+		</style>
 	</head>
 	<body>
+		<div id="hidden" style="display:none;">
+			<div id="header">
+				<div id="header-left">#prestashopdevconf</div>
+			</div>
+		</div>
+
 		<div class="reveal">
 			<div class="slides">
 				<section data-background-gradient="linear-gradient(to bottom, #283b95, #17b2c3)">
 					<h1 class="r-fit-text">Module development techniques I wish I would use</h1>
+					2023
 				</section>
-				<section>About me. TODO</section>
+				<section>
+					<section>
+						<h3>About me</h3>
+						<div style="display:flex;">
+							<img data-src="./images/helloItsMe.jpeg" width="500" height="400" class="img-contain">
+							<ul>
+								<li>8 Years mixed back-end and front-end experience at Invertus. Most of the experience is work with PrestaShop stores and modules<br><br></li>
+								<li>Currently one of the lead front-end developers at project Stockfiller</li>
+							</ul>
+						</div>
+					</section>
+					<section>
+						<h3>Hobbies</h3>
+						<div style="display:flex;">
+							<img data-src="./images/myHobbyAirsoft.jpg" width="500" height="500" class="img-contain">
+							<p>Airsoft</p>
+						</div>
+					</section>
+				</section>
 				<section>
 					<h3>Agenda</h3>
 					<ul>
@@ -435,6 +468,7 @@ parameters:
 		<script src="plugin/notes/notes.js"></script>
 		<script src="plugin/markdown/markdown.js"></script>
 		<script src="plugin/highlight/highlight.js"></script>
+
 		<script>
 			// More info about initialization & config:
 			// - https://revealjs.com/initialization/
@@ -445,6 +479,20 @@ parameters:
 				// Learn about plugins: https://revealjs.com/plugins/
 				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ],
 			});
+		</script>
+
+		<script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+		<script type="text/javascript">
+			// 3. On Reveal.js ready event, copy header/footer <div> into each `.slide-background` <div>
+			var header = $('#header').html();
+			if ( window.location.search.match( /print-pdf/gi ) ) {
+				Reveal.addEventListener( 'ready', function( event ) {
+					$('.slide-background').append(header);
+				});
+			}
+			else {
+				$('div.reveal').append(header);
+		}
 		</script>
 	</body>
 </html>
