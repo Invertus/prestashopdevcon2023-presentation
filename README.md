@@ -1,3 +1,12 @@
+Slides for Prestashop developer conference 2023.
+
+`npm run start` to run presentation or just visit index.html file
+
+Module code can be found [here](https://github.com/Invertus/prestashopdevcon2023)
+Ui code can be found [here](https://github.com/Invertus/prestashopdevcon2023-ui)
+
+Slides are powered by wonderful tool:
+
 <p align="center">
   <a href="https://revealjs.com">
   <img src="https://hakim-static.s3.amazonaws.com/reveal-js/logo/v1/reveal-black-text-sticker.png" alt="reveal.js" width="500">
